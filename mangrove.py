@@ -124,13 +124,13 @@ def extract_features(image_paths, mask_paths, config, mode="train", avg_size=Non
 	threadpool = mp.Pool(config.processors)
 
 	args = zip(image_paths, mask_paths, it.repeat(config.segment), it.repeat(mode), it.repeat(avg_size))
-	# args = tqdm(args)
+	args = tqdm(args, total=len(image_paths))
 
 	if mode == "train":
-		features_list, labels_list, avg_sizes = threadpool.starmap(get_features, args)
+		features_list, labels_list, avg_sizes = threadpool.starmap(get_features, args, chunksize=10)
 		avg_size = np.mean(np.array(avg_sizes), axis=0)
 	else:
-		features_list, labels_list = threadpool.starmap(get_features, args)
+		features_list, labels_list = threadpool.starmap(get_features, args, chunksize=10)
 
 	features = np.concatenate(features_list)
 	labels = np.concatenate(labels_list)
@@ -163,6 +163,10 @@ def get_features(img_path, mask_path, config, mode="train", avg_size=None):
 	features = np.array(features)
 	labels = np.array(labels)
 
+	del(img)
+	del(mask)
+	del(spixels)
+
 	## RETURN RESULTS: ##
 	if mode == "train":
 		return features, labels, avg_size
@@ -174,8 +178,8 @@ def create_spixel(*args):
 		pixel = SuperPixel(*args)
 		return pixel
 	except ValueError as err:
-		print("Skipping SuperPixel. " + str(err))
-		# tqdm.write("Skipping SuperPixel. " + str(err))
+		# print("Skipping SuperPixel. " + str(err))
+		tqdm.write("Skipping SuperPixel. " + str(err))
 
 def get_preprocessor(config, features):
 	print("Fitting preprocessor...")
