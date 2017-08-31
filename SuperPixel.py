@@ -73,7 +73,7 @@ class SuperPixel:
 		mask = (msk == self.id)
 
 		if not mask.any():
-			raise ValueError("Empty mask.")
+			raise ValueError("Empty mask with bounds: {}.".format(self.bounds))
 
 		return mask
 

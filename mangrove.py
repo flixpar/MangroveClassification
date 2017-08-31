@@ -4,6 +4,10 @@ import gc
 import time
 from enum import Enum
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 import cv2
 import numpy as np
 
@@ -11,6 +15,7 @@ import glob
 import yaml
 import pickle
 from tqdm import tqdm
+import progressbar
 
 import itertools as it
 import multiprocessing as mp
@@ -37,9 +42,13 @@ def main():
 		print("Getting data lists...")
 		(train_img_list, train_lbl_list), (test_img_list, test_lbl_list) = get_image_paths(config.image_paths)
 
+		print("Computing average SuperPixel size...")
+		avg_size = compute_avg_size(train_lbl_list)
+		print("Average superpixel size is: {}".format(avg_size))
+
 		print("Generating features...")
-		train_features, train_labels, avg_size = extract_features(train_img_list, train_lbl_list, config, mode="train")
-		test_features, test_labels = extract_features(test_img_list, test_lbl_list, config, mode="test", avg_size=avg_size)
+		train_features, train_labels = extract_features(train_img_list, train_lbl_list, config, avg_size)
+		test_features, test_labels = extract_features(test_img_list, test_lbl_list, config, avg_size)
 
 		print("Preprocessing...")
 		preprocessor = get_preprocessor(config.preprocess, train_features)
@@ -108,39 +117,38 @@ def get_image_paths(paths):
 	train_images_names = sorted(glob.glob(paths["train"] + "/images/*.tif"))
 	train_annotation_names = sorted(glob.glob(paths["train"] + "/annotations/*.png"))
 
-	# train_images = [cv2.imread(fn) for fn in train_images_names]
-	# train_annotations = [cv2.imread(fn, 0) for fn in train_annotation_names]
-
 	test_images_names = sorted(glob.glob(paths["test"] + "/images/*.tif"))
 	test_annotation_names = sorted(glob.glob(paths["test"] + "/annotations/*.png"))
 
-	# test_images = [cv2.imread(fn) for fn in test_images_names]
-	# test_annotations = [cv2.imread(fn, 0) for fn in test_annotation_names]
-
 	return (train_images_names, train_annotation_names), (test_images_names, test_annotation_names)
 
-def extract_features(image_paths, mask_paths, config, mode="train", avg_size=None):
+def extract_features(image_paths, mask_paths, config, avg_size):
 
 	threadpool = mp.Pool(config.processors)
 
-	args = zip(image_paths, mask_paths, it.repeat(config.segment), it.repeat(mode), it.repeat(avg_size))
-	args = tqdm(args, total=len(image_paths))
+	# for debugging:
+	image_paths = image_paths[:20]
+	mask_paths = mask_paths[:20]
 
-	if mode == "train":
-		features_list, labels_list, avg_sizes = threadpool.starmap(get_features, args, chunksize=10)
-		avg_size = np.mean(np.array(avg_sizes), axis=0)
-	else:
-		features_list, labels_list = threadpool.starmap(get_features, args, chunksize=10)
+	args = zip(image_paths, mask_paths, it.repeat(config.segment), it.repeat(avg_size))
+	args = tqdm(args, total=len(image_paths))
+	
+	results = threadpool.starmap(get_features, args)
+	features_list = [r[0] for r in results]
+	labels_list = [r[1] for r in results]
 
 	features = np.concatenate(features_list)
 	labels = np.concatenate(labels_list)
+	
+	for f in features_list:
+		print(f.shape)
 
-	if mode == "train":
-		return features, labels, avg_size
-	else:
-		return features, labels
+	print(features.shape)
+	print(labels.shape)
 
-def get_features(img_path, mask_path, config, mode="train", avg_size=None):
+	return features, labels	
+
+def get_features(img_path, mask_path, config, avg_size):
 
 	## READ IMAGES: ##
 	img = cv2.imread(img_path)
@@ -149,9 +157,6 @@ def get_features(img_path, mask_path, config, mode="train", avg_size=None):
 	## OVERSEGMENT: ##
 	spixel_args = (config["approx_num_superpixels"], config["num_levels"], config["iterations"])
 	segment_mask, num_spixels = oversegment(img, spixel_args)
-
-	if mode == "train":
-		avg_size = calc_avg_size(segment_mask, int(num_spixels/50))
 
 	## EXTRACT SUPERPIXELS: ##
 	spixels = [create_spixel(i, img, mask, segment_mask, avg_size) for i in range(num_spixels)]
@@ -163,15 +168,13 @@ def get_features(img_path, mask_path, config, mode="train", avg_size=None):
 	features = np.array(features)
 	labels = np.array(labels)
 
+	## FREE NOT NEEDED MEMORY: ##
 	del(img)
 	del(mask)
 	del(spixels)
 
 	## RETURN RESULTS: ##
-	if mode == "train":
-		return features, labels, avg_size
-	else:
-		return features, labels
+	return features, labels
 
 def create_spixel(*args):
 	try:
@@ -180,6 +183,23 @@ def create_spixel(*args):
 	except ValueError as err:
 		# print("Skipping SuperPixel. " + str(err))
 		tqdm.write("Skipping SuperPixel. " + str(err))
+
+def compute_avg_size(masks):
+	num_masks = len(masks)
+	num_samples = int(num_masks / 10)
+	avg_sizes = []
+
+	for i in range(num_samples):
+		indx = np.random.randint(0, num_masks-1)
+		mask = cv2.imread(masks[indx], 0)
+		while not mask.any():
+			indx = np.random.randint(0, num_masks-1)
+			mask = cv2.imread(masks[indx], 0)
+		avg_sizes.append(calc_avg_size(mask, 150))
+
+	avg_size = np.mean(np.asarray(avg_sizes), axis=0).astype(np.int)
+	avg_size = tuple(avg_size)
+	return avg_size
 
 def get_preprocessor(config, features):
 	print("Fitting preprocessor...")
@@ -233,8 +253,8 @@ def init_config():
 	# hyper parameters:
 	rounds = 5
 	hyperparams = dict(
-		max_depth = 3,
-		eta = 0.2,
+		max_depth = 2,
+		eta = 0.7,
 		silent = 1,
 		objective = "multi:softmax",
 		nthread = PROCESSORS,
@@ -242,14 +262,14 @@ def init_config():
 
 	# image files
 	image_paths = dict(
-		train = "/home/ml/felix_ws/data/mangrove_rgb/training/",
-		test = "/home/ml/felix_ws/data/mangrove_rgb/validation/",
+		train = "/home/sfm/felix/data/mangrove_rgb/training/",
+		test = "/home/sfm/felix/data/mangrove_rgb/validation/",
 	)
 
 	# superpixels
 	segment = dict(
-		approx_num_superpixels = 5000,
-		num_levels = 5,
+		approx_num_superpixels = 3000,
+		num_levels = 4,
 		iterations = 100
 	)
 
