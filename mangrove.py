@@ -4,10 +4,6 @@ import gc
 import time
 from enum import Enum
 
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-
 import cv2
 import numpy as np
 
@@ -15,14 +11,17 @@ import glob
 import yaml
 import pickle
 from tqdm import tqdm
-import progressbar
 
 import itertools as it
 import multiprocessing as mp
 
 from sklearn.naive_bayes import GaussianNB
-import xgboost as xgb
+# import xgboost as xgb
 from sklearn import metrics
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 from SuperPixel import SuperPixel
 from Preprocessor import Preprocessor, Reducers
@@ -43,7 +42,7 @@ def main():
 		(train_img_list, train_lbl_list), (test_img_list, test_lbl_list) = get_image_paths(config.image_paths)
 
 		print("Computing average SuperPixel size...")
-		avg_size = compute_avg_size(train_lbl_list)
+		avg_size = compute_avg_size(train_img_list, config.segment)
 		print("Average superpixel size is: {}".format(avg_size))
 
 		print("Generating features...")
@@ -89,12 +88,14 @@ def main():
 	# config.hyperparams["num_class"] = len(train_features)
 	# classifier = xgb.train(config.hyperparams, xg_train, num_boost_round=config.rounds, evals=[(xg_test, 'eval')], verbose_eval=True)
 	classifier = GaussianNB()
+	classifier.fit(train_features, train_labels)
 	elapsed_time = time.time() - start_time
 	print("Training took {0:.2f} seconds".format(elapsed_time))
 
 	print("Predicting...")
 	start_time = time.time()
-	pred = classifier.predict(xg_test)
+	# pred = classifier.predict(xg_test)
+	pred = classifier.predict(test_features)
 	elapsed_time = time.time() - start_time
 	print("Predicting took {0:.2f} seconds".format(elapsed_time))
 
@@ -131,24 +132,20 @@ def extract_features(image_paths, mask_paths, config, avg_size):
 	mask_paths = mask_paths[:20]
 
 	args = zip(image_paths, mask_paths, it.repeat(config.segment), it.repeat(avg_size))
-	args = tqdm(args, total=len(image_paths))
-	
+	# args = tqdm(args, total=len(image_paths))
+
 	results = threadpool.starmap(get_features, args)
 	features_list = [r[0] for r in results]
 	labels_list = [r[1] for r in results]
 
 	features = np.concatenate(features_list)
 	labels = np.concatenate(labels_list)
-	
-	for f in features_list:
-		print(f.shape)
 
-	print(features.shape)
-	print(labels.shape)
-
-	return features, labels	
+	return features, labels
 
 def get_features(img_path, mask_path, config, avg_size):
+
+	start_time = time.time()
 
 	## READ IMAGES: ##
 	img = cv2.imread(img_path)
@@ -173,6 +170,10 @@ def get_features(img_path, mask_path, config, avg_size):
 	del(mask)
 	del(spixels)
 
+	## CALCULATE ELAPSED TIME: ##
+	elapsed_time = time.time() - start_time
+	print("Processing image took {0:.2f} seconds".format(elapsed_time))
+
 	## RETURN RESULTS: ##
 	return features, labels
 
@@ -184,17 +185,16 @@ def create_spixel(*args):
 		# print("Skipping SuperPixel. " + str(err))
 		tqdm.write("Skipping SuperPixel. " + str(err))
 
-def compute_avg_size(masks):
-	num_masks = len(masks)
-	num_samples = int(num_masks / 10)
+def compute_avg_size(images, config):
+	num_images = len(images)
+	num_samples = int(num_images / 50)
 	avg_sizes = []
 
-	for i in range(num_samples):
-		indx = np.random.randint(0, num_masks-1)
-		mask = cv2.imread(masks[indx], 0)
-		while not mask.any():
-			indx = np.random.randint(0, num_masks-1)
-			mask = cv2.imread(masks[indx], 0)
+	for i in tqdm(range(num_samples)):
+		indx = np.random.randint(0, num_images-1)
+		img = cv2.imread(images[indx])
+		args = (config["approx_num_superpixels"], config["num_levels"], config["iterations"])
+		mask, _ = oversegment(img, args)
 		avg_sizes.append(calc_avg_size(mask, 150))
 
 	avg_size = np.mean(np.asarray(avg_sizes), axis=0).astype(np.int)
@@ -247,7 +247,7 @@ def init():
 def init_config():
 
 	VERSION = 1
-	PROCESSORS = 8
+	PROCESSORS = 16
 	CLASSES = 4
 
 	# hyper parameters:
@@ -262,14 +262,14 @@ def init_config():
 
 	# image files
 	image_paths = dict(
-		train = "/home/sfm/felix/data/mangrove_rgb/training/",
-		test = "/home/sfm/felix/data/mangrove_rgb/validation/",
+		train = "/home/ubuntu/data/mangrove_rgb/training/",
+		test = "/home/ubuntu/data/mangrove_rgb/validation/",
 	)
 
 	# superpixels
 	segment = dict(
-		approx_num_superpixels = 3000,
-		num_levels = 4,
+		approx_num_superpixels = 300,
+		num_levels = 5,
 		iterations = 100
 	)
 
