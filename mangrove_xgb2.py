@@ -16,7 +16,7 @@ from random import sample
 import itertools as it
 import multiprocessing as mp
 
-from sklearn.svm import SVC as SVM
+import xgboost as xgb
 from sklearn import metrics
 
 import matplotlib
@@ -31,7 +31,7 @@ def main():
 
 	config = init()
 	print("Mangrove Classification")
-	print("SVM Classifier")
+	print("XGBoost Classifier")
 	print("Classifying with: ", config.hyperparams)
 	print("Segmenting with: ", config.segment)
 	print("="*50)
@@ -79,19 +79,20 @@ def main():
 		train_file.close()
 		test_file.close()
 
-	print("Unique Labels:")
-	print(np.unique(train_labels))
-
 	print("Training...")
 	start_time = time.time()
-	classifier = SVM(**config.hyperparams)
+
+	classifier = xgb.sklearn.XGBClassifier(**config.hyperparams)
 	classifier.fit(train_features, train_labels)
+
 	elapsed_time = time.time() - start_time
 	print("Training took {0:.2f} seconds".format(elapsed_time))
 
 	print("Predicting...")
 	start_time = time.time()
+
 	pred = classifier.predict(test_features)
+
 	elapsed_time = time.time() - start_time
 	print("Predicting took {0:.2f} seconds".format(elapsed_time))
 
@@ -104,6 +105,9 @@ def main():
 	print("Precision: {0:.4f}".format(precision))
 	print("IOU: {0:.4f}".format(iou))
 	print()
+
+	print("Saving classifier...")
+	pickle.dump(classifier, open("results/classifier.pkl", "wb"))
 
 #####################
 ## HELPER METHODS: ##
@@ -124,12 +128,12 @@ def extract_features(image_paths, mask_paths, config, avg_size):
 	threadpool = mp.Pool(config.processors)
 
 	# for debugging:
-	image_paths = sample(image_paths, len(image_paths))[:20]
-	mask_paths = sample(mask_paths, len(mask_paths))[:20]
+	# image_paths = sample(image_paths, len(image_paths))[:20]
+	# mask_paths = sample(mask_paths, len(mask_paths))[:20]
 
 	args = zip(image_paths, mask_paths, it.repeat(config.segment), it.repeat(avg_size))
 
-	results = threadpool.starmap(get_features, args)
+	results = threadpool.starmap(get_features, args, chunksize=32)
 	features_list = [r[0] for r in results]
 	labels_list = [r[1] for r in results]
 
@@ -160,8 +164,8 @@ def get_features(img_path, mask_path, config, avg_size):
 	features = [pixel.features for pixel in spixels if pixel is not None]
 	labels = [pixel.label for pixel in spixels if pixel is not None]
 
-	features = np.array(features)
-	labels = np.array(labels)
+	features = np.asarray(features)
+	labels = np.asarray(labels)
 
 	## FREE NOT NEEDED MEMORY: ##
 	del(img)
@@ -247,18 +251,17 @@ def init():
 
 def init_config():
 
-	VERSION = 4
+	VERSION = 1
 	PROCESSORS = 16
 	CLASSES = 4
 
 	# hyper parameters:
-	hyperparams = dict (
-		C = 4,
-		kernel = "rbf",
-		probability = False,
-		class_weight = "balanced",
-		cache_size = 1000,
-		verbose = False,
+	hyperparams = dict(
+		max_depth=6,
+		learning_rate=0.3,
+		n_estimators=100,
+		objective="multi:softmax",
+		n_jobs=16
 	)
 
 	# image files
@@ -285,8 +288,8 @@ def init_config():
 	# saving
 	regenerate_features = True
 	save_path = dict(
-		log = "results/classification_v{}_log.txt".format(VERSION),
-		results = "results/classification_v{}_results.txt".format(VERSION),
+		log = "results/classification_xgb_v{}_log.txt".format(VERSION),
+		results = "results/classification_xgb_v{}_results.txt".format(VERSION),
 		train_features = "saves/train_features.pkl",
 		test_features = "saves/test_features.pkl",
 	)

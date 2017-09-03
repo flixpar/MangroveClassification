@@ -16,7 +16,7 @@ from random import sample
 import itertools as it
 import multiprocessing as mp
 
-from sklearn.svm import SVC as SVM
+import xgboost as xgb
 from sklearn import metrics
 
 import matplotlib
@@ -31,7 +31,7 @@ def main():
 
 	config = init()
 	print("Mangrove Classification")
-	print("SVM Classifier")
+	print("XGBoost Classifier")
 	print("Classifying with: ", config.hyperparams)
 	print("Segmenting with: ", config.segment)
 	print("="*50)
@@ -82,16 +82,36 @@ def main():
 	print("Unique Labels:")
 	print(np.unique(train_labels))
 
+	print(train_features.shape)
+	print(train_labels.shape)
+	train_labels = train_labels.reshape(-1, 1)
+	print(train_labels.shape)
+
+	xg_train = xgb.DMatrix(train_features, label=train_labels)
+	xg_test = xgb.DMatrix(test_features)
+
+	print(xg_train)
+	print(xg_train.get_base_margin())
+	print(xg_train.get_float_info("label"))
+	print(xg_train.get_weight())
+	print(xg_train.num_col())
+	print(xg_train.num_row())
+
+	print(xg_train.get_label())
+	print(np.unique(xg_train.get_label()))
+	print(xg_train.get_label().shape)
+
 	print("Training...")
 	start_time = time.time()
-	classifier = SVM(**config.hyperparams)
-	classifier.fit(train_features, train_labels)
+
+	classifier = xgb.train(config.hyperparams, xg_train, num_boost_round=config.rounds, evals=[(xg_test, 'eval')], verbose_eval=True)
+
 	elapsed_time = time.time() - start_time
 	print("Training took {0:.2f} seconds".format(elapsed_time))
 
 	print("Predicting...")
 	start_time = time.time()
-	pred = classifier.predict(test_features)
+	pred = classifier.predict(xg_test)
 	elapsed_time = time.time() - start_time
 	print("Predicting took {0:.2f} seconds".format(elapsed_time))
 
@@ -247,18 +267,20 @@ def init():
 
 def init_config():
 
-	VERSION = 4
+	VERSION = 1
 	PROCESSORS = 16
 	CLASSES = 4
 
 	# hyper parameters:
+	rounds = 5
 	hyperparams = dict (
-		C = 4,
-		kernel = "rbf",
-		probability = False,
-		class_weight = "balanced",
-		cache_size = 1000,
-		verbose = False,
+		max_depth = 2,
+		eta = 0.7,
+		silent = 1,
+		objective = "multi:softmax",
+		eval_metric = "mlogloss",
+		num_class = CLASSES,
+		nthread = PROCESSORS,
 	)
 
 	# image files
@@ -283,10 +305,10 @@ def init_config():
 	)
 
 	# saving
-	regenerate_features = True
+	regenerate_features = False
 	save_path = dict(
-		log = "results/classification_v{}_log.txt".format(VERSION),
-		results = "results/classification_v{}_results.txt".format(VERSION),
+		log = "results/classification_xgb_v{}_log.txt".format(VERSION),
+		results = "results/classification_xgb_v{}_results.txt".format(VERSION),
 		train_features = "saves/train_features.pkl",
 		test_features = "saves/test_features.pkl",
 	)
@@ -299,6 +321,7 @@ def init_config():
 		preprocess = preprocessor,
 		save_path = save_path,
 		hyperparams = hyperparams,
+		rounds = rounds,
 		regenerate_features = regenerate_features,
 	)
 
