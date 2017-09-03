@@ -139,6 +139,7 @@ class SuperPixel:
 		roi = lbl_img[row_min:row_max, col_min:col_max]
 
 		roi = roi[np.where(self.mask == True)]
+
 		mode = stats.mode(roi, axis=None)
 		mode = mode[0][0]
 
