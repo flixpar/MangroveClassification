@@ -8,54 +8,7 @@ Computing average SuperPixel size...
 Average superpixel size is: (170, 157)
 Generating training features...
 Starting feature extraction...
-Finished extracting features
 
-Classifications found in imagery: [0 1 2 3]
-
-size:
-(8099, 133055)
-(8099,)
-1077612445
-8099
-Preprocessing...
-Fitting preprocessor...
-Training preprocessor took 43565.63 seconds
-Preprocessing took 74.02 seconds
-Reduced feature size from 133055 to 2553
-Training...
-Training took 87.42 seconds
-Generating test features...
-Starting feature extraction...
-Finished extracting features
-
-Classifications found in imagery: [0 1 2 3]
-
-size:
-(7288, 133055)
-(7288,)
-969704840
-7288
-Preprocessing took 43.15 seconds
-Reduced feature size from 133055 to 2553
-Predicting...
-Predicting took 0.12 seconds
-Evaluating...
-Saving results...
-             precision    recall  f1-score   support
-
-          0       0.73      0.97      0.83      5223
-          1       0.04      0.01      0.01       549
-          2       0.42      0.08      0.13      1010
-          3       0.00      0.00      0.00       506
-
-avg / total       0.58      0.71      0.62      7288
-
-
-Accuracy: 0.7053
-Precision: 0.5841
-IOU: 0.7053
-
-Saving classifier...
 Starting iteration 18
 5638.0
 Processing image took 35.6 seconds
@@ -659,3 +612,51 @@ Starting iteration 87
 5072.0
 Processing image took 33.8 seconds
 Ending iteration 87
+
+Finished extracting features
+
+Classifications found in imagery: [0 1 2 3]
+
+size:
+(8099, 133055)
+(8099,)
+1077612445
+8099
+Preprocessing...
+Fitting preprocessor...
+Training preprocessor took 43565.63 seconds
+Preprocessing took 74.02 seconds
+Reduced feature size from 133055 to 2553
+Training...
+Training took 87.42 seconds
+Generating test features...
+Starting feature extraction...
+Finished extracting features
+
+Classifications found in imagery: [0 1 2 3]
+
+size:
+(7288, 133055)
+(7288,)
+969704840
+7288
+Preprocessing took 43.15 seconds
+Reduced feature size from 133055 to 2553
+Predicting...
+Predicting took 0.12 seconds
+Evaluating...
+Saving results...
+             precision    recall  f1-score   support
+
+          0       0.73      0.97      0.83      5223
+          1       0.04      0.01      0.01       549
+          2       0.42      0.08      0.13      1010
+          3       0.00      0.00      0.00       506
+
+avg / total       0.58      0.71      0.62      7288
+
+
+Accuracy: 0.7053
+Precision: 0.5841
+IOU: 0.7053
+

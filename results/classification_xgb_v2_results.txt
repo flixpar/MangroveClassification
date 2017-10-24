@@ -7,7 +7,8 @@
 
 avg / total       0.58      0.71      0.62      7288
 
-Accuracy: 0.7053IOU: 0.7053Precision: 0.5841
+Accuracy: 0.7053 IOU: 0.7053 Precision: 0.5841
+
 [[5059   70   49   45]
  [ 491    4   37   17]
  [ 903   27   77    3]
