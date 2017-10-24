@@ -1,0 +1,416 @@
+Mangrove Classification
+XGBoost Classifier
+Classifying with:  {'objective': 'multi:softmax', 'n_jobs': 16, 'max_depth': 6, 'n_estimators': 100, 'learning_rate': 0.3}
+Segmenting with:  {'approx_num_superpixels': 300, 'iterations': 100, 'num_levels': 5}
+==================================================
+Getting data lists...
+Computing average SuperPixel size...
+Average superpixel size is: (101, 99)
+Generating training features...
+Starting iteration 30
+4109.0
+Processing image took 40.5 seconds
+Ending iteration 30
+Starting iteration 31
+3934.0
+Processing image took 40.9 seconds
+Ending iteration 31
+Starting iteration 48
+2804.0
+Processing image took 40.7 seconds
+Ending iteration 48
+Starting iteration 49
+2609.0
+Processing image took 41.1 seconds
+Ending iteration 49
+Starting iteration 82
+3472.0
+Processing image took 40.9 seconds
+Ending iteration 82
+Starting iteration 83
+3163.0
+Processing image took 40.8 seconds
+Ending iteration 83
+Starting iteration 12
+2062.0
+Processing image took 40.4 seconds
+Ending iteration 12
+Starting iteration 13
+2019.0
+Processing image took 41.3 seconds
+Ending iteration 13
+Starting iteration 54
+3216.0
+Processing image took 40.9 seconds
+Ending iteration 54
+Starting iteration 55
+3603.0
+Processing image took 41.5 seconds
+Ending iteration 55
+Starting iteration 88
+9999.0
+Processing image took 39.6 seconds
+Ending iteration 88
+Starting iteration 89
+9999.0
+Processing image took 38.8 seconds
+Ending iteration 89
+Starting iteration 26
+4285.0
+Processing image took 40.5 seconds
+Ending iteration 26
+Starting iteration 27
+9999.0
+Processing image took 38.8 seconds
+Ending iteration 27
+Starting iteration 32
+9999.0
+Processing image took 38.9 seconds
+Ending iteration 32
+Starting iteration 33
+9999.0
+Processing image took 40.6 seconds
+Ending iteration 33
+Starting iteration 64
+9999.0
+Processing image took 39.4 seconds
+Ending iteration 64
+Starting iteration 65
+2663.0
+Processing image took 40.5 seconds
+Ending iteration 65
+Starting iteration 98
+9999.0
+Processing image took 28.3 seconds
+Ending iteration 98
+Starting iteration 99
+2477.0
+Processing image took 27.7 seconds
+Ending iteration 99
+Starting iteration 4
+3248.0
+Processing image took 40.4 seconds
+Ending iteration 4
+Starting iteration 5
+3383.0
+Processing image took 41.4 seconds
+Ending iteration 5
+Starting iteration 58
+3415.0
+Processing image took 41.1 seconds
+Ending iteration 58
+Starting iteration 59
+4127.0
+Processing image took 41.4 seconds
+Ending iteration 59
+Starting iteration 90
+3408.0
+Processing image took 40.5 seconds
+Ending iteration 90
+Starting iteration 91
+2592.0
+Processing image took 39.7 seconds
+Ending iteration 91
+Starting iteration 18
+2219.0
+Processing image took 40.5 seconds
+Ending iteration 18
+Starting iteration 19
+2181.0
+Processing image took 40.6 seconds
+Ending iteration 19
+Starting iteration 42
+3142.0
+Processing image took 40.9 seconds
+Ending iteration 42
+Starting iteration 43
+4851.0
+Processing image took 41.1 seconds
+Ending iteration 43
+Starting iteration 78
+3296.0
+Processing image took 40.4 seconds
+Ending iteration 78
+Starting iteration 79
+3571.0
+Processing image took 40.5 seconds
+Ending iteration 79
+Starting iteration 20
+2967.0
+Processing image took 41.6 seconds
+Ending iteration 20
+Starting iteration 21
+4832.0
+Processing image took 41.2 seconds
+Ending iteration 21
+Starting iteration 62
+2952.0
+Processing image took 41.3 seconds
+Ending iteration 62
+Starting iteration 63
+3949.0
+Processing image took 41.4 seconds
+Ending iteration 63
+Starting iteration 92
+4442.0
+Processing image took 40.4 seconds
+Ending iteration 92
+Starting iteration 93
+3972.0
+Processing image took 39.9 seconds
+Ending iteration 93
+Starting iteration 28
+Skipping SuperPixel. No region found.
+3086.0
+Processing image took 40.4 seconds
+Ending iteration 28
+Starting iteration 29
+2565.0
+Processing image took 41.1 seconds
+Ending iteration 29
+Starting iteration 46
+9999.0
+Processing image took 39.1 seconds
+Ending iteration 46
+Starting iteration 47
+4316.0
+Processing image took 40.8 seconds
+Ending iteration 47
+Starting iteration 72
+2984.0
+Processing image took 40.7 seconds
+Ending iteration 72
+Starting iteration 73
+9999.0
+Processing image took 40.5 seconds
+Ending iteration 73
+Starting iteration 22
+3684.0
+Processing image took 40.4 seconds
+Ending iteration 22
+Starting iteration 23
+2272.0
+Processing image took 41.3 seconds
+Ending iteration 23
+Starting iteration 56
+9999.0
+Processing image took 39.3 seconds
+Ending iteration 56
+Starting iteration 57
+2117.0
+Processing image took 41.4 seconds
+Ending iteration 57
+Starting iteration 80
+9999.0
+Processing image took 38.6 seconds
+Ending iteration 80
+Starting iteration 81
+Skipping SuperPixel. No region found.
+2643.0
+Processing image took 40.4 seconds
+Ending iteration 81
+Starting iteration 24
+3470.0
+Processing image took 40.5 seconds
+Ending iteration 24
+Starting iteration 25
+3866.0
+Processing image took 40.2 seconds
+Ending iteration 25
+Starting iteration 38
+1928.0
+Processing image took 40.4 seconds
+Ending iteration 38
+Starting iteration 39
+9999.0
+Processing image took 38.5 seconds
+Ending iteration 39
+Starting iteration 66
+9999.0
+Processing image took 38.6 seconds
+Ending iteration 66
+Starting iteration 67
+9999.0
+Processing image took 39.4 seconds
+Ending iteration 67
+Starting iteration 96
+9999.0
+Processing image took 27.8 seconds
+Ending iteration 96
+Starting iteration 97
+2290.0
+Processing image took 27.8 seconds
+Ending iteration 97
+Starting iteration 16
+3931.0
+Processing image took 39.6 seconds
+Ending iteration 16
+Starting iteration 17
+4356.0
+Processing image took 40.9 seconds
+Ending iteration 17
+Starting iteration 34
+3026.0
+Processing image took 39.9 seconds
+Ending iteration 34
+Starting iteration 35
+3894.0
+Processing image took 40.4 seconds
+Ending iteration 35
+Starting iteration 68
+3260.0
+Processing image took 40.7 seconds
+Ending iteration 68
+Starting iteration 69
+2480.0
+Processing image took 40.6 seconds
+Ending iteration 69
+Starting iteration 0
+1875.0
+Processing image took 40.8 seconds
+Ending iteration 0
+Starting iteration 1
+9999.0
+Processing image took 40.6 seconds
+Ending iteration 1
+Starting iteration 44
+4069.0
+Processing image took 40.4 seconds
+Ending iteration 44
+Starting iteration 45
+2088.0
+Processing image took 40.9 seconds
+Ending iteration 45
+Starting iteration 76
+3590.0
+Processing image took 40.2 seconds
+Ending iteration 76
+Starting iteration 77
+Skipping SuperPixel. No region found.
+4333.0
+Processing image took 40.5 seconds
+Ending iteration 77
+Starting iteration 6
+Skipping SuperPixel. No region found.
+3550.0
+Processing image took 40.0 seconds
+Ending iteration 6
+Starting iteration 7
+2549.0
+Processing image took 40.6 seconds
+Ending iteration 7
+Starting iteration 36
+1983.0
+Processing image took 40.5 seconds
+Ending iteration 36
+Starting iteration 37
+9999.0
+Processing image took 39.9 seconds
+Ending iteration 37
+Starting iteration 70
+3223.0
+Processing image took 40.9 seconds
+Ending iteration 70
+Starting iteration 71
+3674.0
+Processing image took 40.0 seconds
+Ending iteration 71
+Starting iteration 2
+2453.0
+Processing image took 40.6 seconds
+Ending iteration 2
+Starting iteration 3
+3523.0
+Processing image took 41.0 seconds
+Ending iteration 3
+Starting iteration 52
+3422.0
+Processing image took 41.2 seconds
+Ending iteration 52
+Starting iteration 53
+3706.0
+Processing image took 41.0 seconds
+Ending iteration 53
+Starting iteration 86
+Skipping SuperPixel. Empty mask with bounds: ((697, 858), (706, 912)).
+2958.0
+Processing image took 40.6 seconds
+Ending iteration 86
+Starting iteration 87
+3048.0
+Processing image took 40.3 seconds
+Ending iteration 87
+Starting iteration 14
+2781.0
+Processing image took 40.5 seconds
+Ending iteration 14
+Starting iteration 15
+3335.0
+Processing image took 41.1 seconds
+Ending iteration 15
+Starting iteration 50
+6513.0
+Processing image took 41.0 seconds
+Ending iteration 50
+Starting iteration 51
+9999.0
+Processing image took 40.6 seconds
+Ending iteration 51
+Starting iteration 84
+3420.0
+Processing image took 40.7 seconds
+Ending iteration 84
+Starting iteration 85
+3014.0
+Processing image took 40.1 seconds
+Ending iteration 85
+Starting iteration 10
+3475.0
+Processing image took 41.0 seconds
+Ending iteration 10
+Starting iteration 11
+2789.0
+Processing image took 41.4 seconds
+Ending iteration 11
+Starting iteration 60
+2761.0
+Processing image took 42.1 seconds
+Ending iteration 60
+Starting iteration 61
+Skipping SuperPixel. No region found.
+9999.0
+Processing image took 40.8 seconds
+Ending iteration 61
+Starting iteration 94
+4138.0
+Processing image took 40.6 seconds
+Ending iteration 94
+Starting iteration 95
+2182.0
+Processing image took 39.3 seconds
+Ending iteration 95
+Starting iteration 8
+3440.0
+Processing image took 40.5 seconds
+Ending iteration 8
+Starting iteration 9
+Skipping SuperPixel. No region found.
+3832.0
+Processing image took 40.6 seconds
+Ending iteration 9
+Starting iteration 40
+2991.0
+Processing image took 40.2 seconds
+Ending iteration 40
+Starting iteration 41
+2561.0
+Processing image took 40.9 seconds
+Ending iteration 41
+Starting iteration 74
+2560.0
+Processing image took 40.7 seconds
+Ending iteration 74
+Starting iteration 75
+1818.0
+Processing image took 40.6 seconds
+Ending iteration 75
