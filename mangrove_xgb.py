@@ -45,27 +45,18 @@ def main():
 		avg_size = compute_avg_size(train_img_list, config.segment)
 		print("Average superpixel size is: {}".format(avg_size))
 
-		print("Generating features...")
+		print("Generating training features...")
 		train_features, train_labels = extract_features(train_img_list, train_lbl_list, config, avg_size)
-		test_features, test_labels = extract_features(test_img_list, test_lbl_list, config, avg_size)
 
 		print("Preprocessing...")
 		preprocessor = get_preprocessor(config.preprocess, train_features)
 		train_features = preprocessor.process(train_features)
-		test_features = preprocessor.process(test_features)
 
-		print("Saving features...")
-		train_file = open(config.save_path["train_features"], 'wb')
-		test_file = open(config.save_path["test_features"], 'wb')
-
-		train_save = (train_features, train_labels)
-		test_save = (test_features, test_labels)
-
-		pickle.dump(train_save, train_file)
-		pickle.dump(test_save, test_file)
-
-		train_file.close()
-		test_file.close()
+		# print("Saving features...")
+		# train_file = open(config.save_path["train_features"], 'wb')
+		# train_save = (train_features, train_labels)
+		# pickle.dump(train_save, train_file)
+		# train_file.close()
 
 	else:
 
@@ -79,39 +70,28 @@ def main():
 		train_file.close()
 		test_file.close()
 
-	print("Unique Labels:")
-	print(np.unique(train_labels))
-
-	print(train_features.shape)
-	print(train_labels.shape)
-	train_labels = train_labels.reshape(-1, 1)
-	print(train_labels.shape)
-
-	xg_train = xgb.DMatrix(train_features, label=train_labels)
-	xg_test = xgb.DMatrix(test_features)
-
-	print(xg_train)
-	print(xg_train.get_base_margin())
-	print(xg_train.get_float_info("label"))
-	print(xg_train.get_weight())
-	print(xg_train.num_col())
-	print(xg_train.num_row())
-
-	print(xg_train.get_label())
-	print(np.unique(xg_train.get_label()))
-	print(xg_train.get_label().shape)
-
 	print("Training...")
 	start_time = time.time()
 
-	classifier = xgb.train(config.hyperparams, xg_train, num_boost_round=config.rounds, evals=[(xg_test, 'eval')], verbose_eval=True)
+	classifier = xgb.sklearn.XGBClassifier(**config.hyperparams)
+	classifier.fit(train_features, train_labels)
 
 	elapsed_time = time.time() - start_time
 	print("Training took {0:.2f} seconds".format(elapsed_time))
 
+	print("Generating test features...")
+	test_features, test_labels = extract_features(test_img_list, test_lbl_list, config, avg_size)
+	test_features = preprocessor.process(test_features)
+	# test_file = open(config.save_path["test_features"], 'wb')
+	# test_save = (test_features, test_labels)
+	# pickle.dump(test_save, test_file)
+	# test_file.close()
+
 	print("Predicting...")
 	start_time = time.time()
-	pred = classifier.predict(xg_test)
+
+	pred = classifier.predict(test_features)
+
 	elapsed_time = time.time() - start_time
 	print("Predicting took {0:.2f} seconds".format(elapsed_time))
 
@@ -124,6 +104,9 @@ def main():
 	print("Precision: {0:.4f}".format(precision))
 	print("IOU: {0:.4f}".format(iou))
 	print()
+
+	print("Saving classifier...")
+	pickle.dump(classifier, open("results/classifier.pkl", "wb"))
 
 #####################
 ## HELPER METHODS: ##
@@ -144,12 +127,15 @@ def extract_features(image_paths, mask_paths, config, avg_size):
 	threadpool = mp.Pool(config.processors)
 
 	# for debugging:
-	image_paths = sample(image_paths, len(image_paths))[:20]
-	mask_paths = sample(mask_paths, len(mask_paths))[:20]
+	image_paths = sample(image_paths, len(image_paths))[:100]
+	mask_paths = sample(mask_paths, len(mask_paths))[:100]
 
-	args = zip(image_paths, mask_paths, it.repeat(config.segment), it.repeat(avg_size))
+	args = zip(image_paths, mask_paths, it.repeat(config.segment), it.repeat(avg_size), range(len(image_paths)))
 
+	print("Starting feature extraction...")
 	results = threadpool.starmap(get_features, args)
+	print("Finished extracting features")
+
 	features_list = [r[0] for r in results]
 	labels_list = [r[1] for r in results]
 
@@ -157,13 +143,30 @@ def extract_features(image_paths, mask_paths, config, avg_size):
 	labels = np.concatenate(labels_list)
 
 	unique, counts = np.unique(labels, return_counts=True)
-	print("\nClassifications found in imagery: {0}\nCounts: {1}\n".format(unique, counts))
+	# print("\nClassifications found in imagery: {0}\nCounts: {1}\n".format(unique, counts))
+	print("\nClassifications found in imagery: {}\n".format(unique))
 
-	return features, labels
+	out_features = features.copy()
+	out_labels = labels.copy()
+	print("size:")
+	print(out_features.shape)
+	print(out_labels.shape)
+	print(out_features.size)
+	print(out_labels.size)
 
-def get_features(img_path, mask_path, config, avg_size):
+	del(features)
+	del(labels)
+	del(results)
+	gc.collect()
+
+	# return features, labels
+	return out_features, out_labels
+
+def get_features(img_path, mask_path, config, avg_size, iteration):
 
 	start_time = time.time()
+
+	print("Starting iteration {}".format(iteration))
 
 	## READ IMAGES: ##
 	img = cv2.imread(img_path)
@@ -180,8 +183,17 @@ def get_features(img_path, mask_path, config, avg_size):
 	features = [pixel.features for pixel in spixels if pixel is not None]
 	labels = [pixel.label for pixel in spixels if pixel is not None]
 
-	features = np.array(features)
-	labels = np.array(labels)
+	features = np.asarray(features)
+	labels = np.asarray(labels)
+
+	assert(np.isfinite(features).all())
+	assert(np.isfinite(labels).all())
+	assert((features > -100000).all())
+	assert((features < 100000).all())
+	assert((labels >= 0).all())
+	assert((labels < 4).all())
+
+	print(features.max())
 
 	## FREE NOT NEEDED MEMORY: ##
 	del(img)
@@ -191,6 +203,7 @@ def get_features(img_path, mask_path, config, avg_size):
 	## CALCULATE ELAPSED TIME: ##
 	elapsed_time = time.time() - start_time
 	print("Processing image took {0:.1f} seconds".format(elapsed_time))
+	print("Ending iteration {}".format(iteration))
 
 	## RETURN RESULTS: ##
 	return features, labels
@@ -268,32 +281,29 @@ def init():
 def init_config():
 
 	VERSION = 1
-	PROCESSORS = 16
+	PROCESSORS = 12
 	CLASSES = 4
 
 	# hyper parameters:
-	rounds = 5
-	hyperparams = dict (
-		max_depth = 2,
-		eta = 0.7,
-		silent = 1,
-		objective = "multi:softmax",
-		eval_metric = "mlogloss",
-		num_class = CLASSES,
-		nthread = PROCESSORS,
+	hyperparams = dict(
+		max_depth=6,
+		learning_rate=0.3,
+		n_estimators=100,
+		objective="multi:softmax",
+		n_jobs=PROCESSORS,
 	)
 
 	# image files
 	image_paths = dict(
-		train = "/home/ubuntu/data/mangrove_rgb/training/",
-		test = "/home/ubuntu/data/mangrove_rgb/validation/",
+		train = "/home/flixpar/data/mangrove_rgb/training/",
+		test = "/home/flixpar/data/mangrove_rgb/validation/",
 	)
 
 	# superpixels
 	segment = dict(
-		approx_num_superpixels = 300,
-		num_levels = 5,
-		iterations = 100
+		approx_num_superpixels = 120,
+		num_levels = 4,
+		iterations = 50
 	)
 
 	# preprocessor
@@ -301,11 +311,11 @@ def init_config():
 		normalize = True,
 		reduce_features = True,
 		reducer_type = Reducers.pca,
-		explained_variance = 0.95
+		explained_variance = 0.90
 	)
 
 	# saving
-	regenerate_features = False
+	regenerate_features = True
 	save_path = dict(
 		log = "results/classification_xgb_v{}_log.txt".format(VERSION),
 		results = "results/classification_xgb_v{}_results.txt".format(VERSION),
@@ -321,7 +331,6 @@ def init_config():
 		preprocess = preprocessor,
 		save_path = save_path,
 		hyperparams = hyperparams,
-		rounds = rounds,
 		regenerate_features = regenerate_features,
 	)
 
