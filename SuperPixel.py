@@ -26,6 +26,10 @@ class SuperPixel:
 
 		self.checkSuperPixel(src_img)
 
+		assert((src_img < 2**31).all())
+		assert((lbl_img < 2**31).all())
+		assert((mask_img < 2**31).all())
+
 		self.id = id_num
 		self.size = avg_size
 		self.bounds = self.getBoundingBox(mask_img)
@@ -98,37 +102,25 @@ class SuperPixel:
 		for theta in range(rot_start, rot_end, ROTATION_SIZE):
 			roi = self.processImg(src_img, theta)
 			gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-			assert((gray.shape[0]==self.size[1]) and (gray.shape[1]==self.size[0]))
 
 			hog = feature.hog(gray, **hog_args)
 
 			lbp = feature.local_binary_pattern(gray, **lbp_args)
 			lbp_n_bins = 256 # int(lbp.max() + 1)
 			lbp_hist, _ = np.histogram(lbp, density=True, bins=lbp_n_bins)  #, range=(0, lbp_n_bins))
-			assert(lbp_hist.size == lbp_n_bins)
-
-			if not np.isfinite(lbp).all():
-				print("Err: lbp not finite")
-
-			if lbp.max() == 0 and not np.isfinite(lbp_hist).all():
-				print("Err: bad lbp hist.")
-				lbp_hist = np.zeros((lbp_n_bins))
-				lbp_hist[0] = lbp.size
 
 			hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
 			r_hist, _ = np.histogram(hsv[:,:,0], bins=64)
 			g_hist, _ = np.histogram(hsv[:,:,1], bins=64)
 			b_hist, _ = np.histogram(hsv[:,:,2], bins=64)
 			hist = np.concatenate((r_hist, g_hist, b_hist))
-			assert(hist.size == 192)
 
 			features.append(hog)
 			features.append(lbp_hist)
 			features.append(hist)
 
-		assert(len(features)==3*ROTATIONS)
 		result = np.concatenate(features)
-		assert(np.isfinite(result).all())
+		assert((result < 2**31).all())
 		return result
 
 	# given the image of all labels, find the label for this superpixel
